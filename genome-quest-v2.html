@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genome Quest v2</title>
+<style>
+:root{--navy:#123a63;--blue:#1479d1;--cyan:#16b8cf;--purple:#7a4de8;--w:26px;--A:#2fa66a;--C:#2a7de1;--G:#f0932b;--T:#e0466a}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Arial,sans-serif;color:#172033;background:radial-gradient(circle at 8% 8%,rgba(22,184,207,.18),transparent 24%),radial-gradient(circle at 92% 12%,rgba(122,77,232,.16),transparent 24%),linear-gradient(135deg,#f4fbff,#fbf8ff)}
+.app{max-width:1100px;margin:auto;padding:18px}
+.card{background:#fff;border-radius:24px;padding:26px;margin-bottom:16px;box-shadow:0 12px 35px rgba(40,50,80,.12)}
+.hidden{display:none!important}
+h1{font-size:clamp(34px,6vw,56px);margin:0 0 8px;color:var(--navy)}h2,h3{color:var(--navy);margin:.4em 0}
+.lead{font-size:19px;line-height:1.5;color:#3d4a60}
+.brand{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 20px;margin-bottom:16px;border-radius:22px;background:linear-gradient(100deg,#fff,#f1fbff 50%,#faf5ff);box-shadow:0 8px 26px rgba(30,70,110,.08)}
+.brand b{color:var(--navy);font-size:18px}.brand small{display:block;color:#6c5871}
+.tag{padding:8px 13px;border-radius:999px;font-size:12px;font-weight:900;color:#fff;background:linear-gradient(90deg,var(--purple),#e95aa7,#ff9c3d)}
+button{border:0;border-radius:14px;padding:13px 20px;margin:5px 5px 5px 0;background:linear-gradient(90deg,var(--blue),var(--cyan));color:#fff;font-size:16px;font-weight:800;cursor:pointer;transition:.15s}
+button:hover:not(:disabled){filter:brightness(1.06);transform:translateY(-1px)}button:disabled{opacity:.5;cursor:not-allowed}
+button.sec{background:#e9eef7;color:#263650}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.tab{margin:0;padding:9px 15px;font-size:14px;background:#e9eef7;color:#263650}
+.tab[aria-selected=true]{background:linear-gradient(90deg,var(--blue),var(--cyan));color:#fff}.tab.locked{opacity:.45;cursor:not-allowed}
+.score{float:right;font-weight:900;color:var(--blue);font-size:18px}
+.bar{height:10px;background:#e7ebf2;border-radius:20px;overflow:hidden;margin:10px 0 20px}.bar div{height:100%;width:25%;transition:.3s;background:linear-gradient(90deg,var(--blue),var(--cyan),var(--purple))}
+/* bases */
+.b{font-family:"Courier New",monospace;font-weight:900;color:#fff;display:flex;align-items:center;justify-content:center}
+.bA{background:var(--A)}.bC{background:var(--C)}.bG{background:var(--G)}.bT{background:var(--T)}
+.scroll{overflow-x:auto;padding:6px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(36,var(--w));width:max-content}
+.grid .c{height:32px;border:1px solid #fff;font-size:16px}
+.grid .rc{cursor:pointer}.grid .rc:hover{filter:brightness(1.15);outline:2px solid #172033;z-index:1}
+.ruler{font-family:Arial,sans-serif;font-size:10px;color:#8a96aa;text-align:center;height:14px}
+.lane{grid-column:1/-1;display:grid;grid-template-columns:repeat(36,var(--w));margin-top:4px;animation:pop .25s}
+.blk{display:grid;grid-template-columns:repeat(12,var(--w));border-radius:8px;overflow:hidden;box-shadow:0 3px 8px rgba(30,50,80,.18)}
+.blk .c{cursor:default}
+.mm{outline:3px solid #172033;outline-offset:-3px;filter:saturate(.4) brightness(1.1)}
+.rc.miss{opacity:.35}.rc.hint{outline:3px dashed #172033;outline-offset:-3px}
+@keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1}}
+.lbl{font-weight:800;color:#526078;font-size:14px;margin:10px 0 2px}
+.bank{display:flex;flex-wrap:wrap;gap:10px;padding:12px;border:2px dashed #c6d1e2;border-radius:16px;min-height:74px;background:#fafcff}
+.read{display:flex;margin:0;padding:0;background:none;border-radius:10px;overflow:hidden;border:3px solid transparent;box-shadow:0 3px 8px rgba(30,50,80,.18)}
+.read .b{width:22px;height:32px;font-size:15px}.read.sel{border-color:#172033;transform:translateY(-3px)}
+.msg{display:none;margin-top:12px;padding:13px 17px;border-radius:14px;font-weight:700}.msg.show{display:block}.good{background:#e5f7ed;color:#1d704a}.bad{background:#fff0f0;color:#9b3838}.info{background:#eef4ff;color:#275ea8}
+.choices{display:grid;gap:12px;margin-top:10px}.choice{width:100%;margin:0;text-align:left;min-height:64px;background:#f1f5fb;color:#263650;border:2px solid transparent}
+.choice.ok{background:#e4f8ef;border-color:#35ae7b}.choice.no{background:#fff0f3;border-color:#df6b86}
+.panel{background:#f7f9fc;border-radius:18px;padding:16px 18px;margin-top:14px}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.legend .b{width:30px;height:30px;border-radius:8px}
+.small{font-size:13px;color:#6b778b;text-align:center;margin-top:12px}
+@media(max-width:700px){:root{--w:22px}.card{padding:18px}.app{padding:10px}.grid .c{font-size:14px}}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="brand"><div><b>🧬 Statistical Genomics &amp; Bioinformatics Platform</b><small>Rady Faculty of Health Sciences</small></div><div class="tag">OPEN HOUSE • GENOME QUEST</div></div>
+
+<div class="card" id="intro">
+  <h1>🧬 Genome Quest</h1>
+  <p class="lead">A sequencer just read a patient's DNA in short pieces. Place the pieces on the reference genome, spot where they disagree with it, and decide what that means.</p>
+  <div class="legend" aria-label="Base colors"><div class="b bA">A</div><div class="b bC">C</div><div class="b bG">G</div><div class="b bT">T</div></div>
+  <button id="start">START THE QUEST 🚀</button>
+</div>
+
+<div class="card hidden" id="game">
+  <div class="tabs" role="tablist" id="tabs">
+    <button class="tab" role="tab" data-l="1">1 · Align</button>
+    <button class="tab" role="tab" data-l="2">2 · Find the SNP</button>
+    <button class="tab" role="tab" data-l="3">3 · Interpret</button>
+    <button class="tab" role="tab" data-l="4">4 · Done</button>
+  </div>
+  <span class="score">⭐ <span id="score">0</span></span>
+  <div class="bar"><div id="prog"></div></div>
+
+  <section id="L1">
+    <h2>🧩 Align the reads</h2>
+    <p class="lead">Tap a read, then tap the reference letter where it should <b>start</b>.</p>
+    <div class="lbl">REFERENCE (position numbers above)</div><div class="scroll" id="pile1"></div>
+    <div class="lbl">READS</div><div class="bank" id="bank"></div>
+    <button class="sec" id="hint1">💡 Hint</button>
+    <div class="msg" id="m1" role="status" aria-live="polite"></div>
+    <button class="hidden" id="n1">Next: find the SNP →</button>
+  </section>
+
+  <section id="L2" class="hidden">
+    <h2>🔎 Find the SNP</h2>
+    <p class="lead">All reads are aligned. Find the <b>one position</b> where the reads disagree with the reference, and tap it.</p>
+    <div class="scroll" id="pile2"></div>
+    <button class="sec" id="hint2">💡 Hint</button>
+    <div class="msg" id="m2" role="status" aria-live="polite"></div>
+    <button class="hidden" id="n2">Next: what does it mean? →</button>
+  </section>
+
+  <section id="L3" class="hidden">
+    <h2>🩺 What does it mean?</h2>
+    <p class="lead">In a research study, this variant appeared <b>more often in people with a particular disease</b> than in healthy comparison people. What should the scientist report?</p>
+    <div class="choices" id="choices">
+      <button class="choice" data-k="assoc">🧬 The variant is associated with the disease, so it is worth investigating further.</button>
+      <button class="choice" data-k="cause">⚠️ The variant causes the disease.</button>
+      <button class="choice" data-k="diag">🩺 Anyone carrying the variant can be diagnosed with the disease.</button>
+    </div>
+    <div class="msg" id="m3" role="status" aria-live="polite"></div>
+    <div class="panel hidden" id="why"><h3>💡 Why?</h3><p>An association is a clue: it shows the variant and the disease turn up together more than chance would explain. It doesn't prove cause, and it can't diagnose one person. That takes more evidence and validated clinical testing.</p></div>
+    <button class="hidden" id="n3">Finish →</button>
+  </section>
+
+  <section id="L4" class="hidden">
+    <div style="text-align:center;font-size:64px">🏆</div>
+    <h2 style="text-align:center">Mission complete! Score: ⭐ <span id="final">0</span></h2>
+    <div class="panel"><h3>What you did</h3>
+      <p><b>Alignment:</b> placed reads where they match the reference. <b>SNP:</b> found the single letter where reads disagree. <b>Interpretation:</b> treated an association as a clue, not a diagnosis.</p></div>
+    <div class="panel"><h3>🔬 In the real world</h3>
+      <p>Real reads are about 150 letters long and a sequencing run produces millions of them. Software aligns them all and flags the variants. Some single-letter changes are well proven to cause disease, like the one behind sickle cell disease, but for most, statistics is what tells scientists which clues are worth chasing.</p></div>
+    <div style="text-align:center"><button id="again">PLAY AGAIN</button></div>
+  </section>
+</div>
+<p class="small">Statistical Genomics &amp; Bioinformatics Platform • Rady Faculty of Health Sciences • High School Open House</p>
+</div>
+
+<script>
+const N=36,L=12,STARTS=[0,6,12,18,24],$=id=>document.getElementById(id);
+let ref,reads,snp,placed,sel,score,unlocked,cur,wrong1,wrong2,wrong3,missed,idle;
+
+const rnd=n=>Math.floor(Math.random()*n),pick=s=>s[rnd(s.length)];
+const cell=(ch,extra="")=>`<div class="c b b${ch} ${extra}">${ch}</div>`;
+
+function gen(){
+  ref=Array.from({length:N},()=>pick("ACGT"));
+  const pos=6+rnd(24),alt=pick("ACGT".replace(ref[pos],""));
+  snp={pos,ref:ref[pos],alt};
+  reads=STARTS.map(s=>{const a=ref.slice(s,s+L);if(pos>=s&&pos<s+L)a[pos-s]=alt;return{start:s,seq:a.join("")}});
+  placed=reads.map(()=>false);sel=null;wrong1=wrong2=wrong3=0;missed=new Set();
+}
+
+/* draw the reference + any placed reads. mode: 'align' | 'find' | 'done' */
+function pile(el,mode){
+  let h='<div class="grid">';
+  for(let i=0;i<N;i++)h+=`<div class="ruler">${i+1}</div>`;
+  for(let i=0;i<N;i++){
+    const cls="rc"+(mode!=="align"&&missed.has(i)?" miss":"")+(mode==="done"&&i===snp.pos?" mm":"");
+    h+=`<div class="c b b${ref[i]} ${cls}" data-c="${i}" role="button" aria-label="Position ${i+1}, ${ref[i]}">${ref[i]}</div>`;
+  }
+  reads.forEach((r,k)=>{
+    if(!placed[k])return;
+    h+=`<div class="lane"><div class="blk" style="grid-column:${r.start+1}/span ${L}">`;
+    for(let j=0;j<L;j++){const s=r.start+j;h+=`<div class="c b b${r.seq[j]} ${mode==="done"&&r.seq[j]!==ref[s]?"mm":""}" data-c="${s}">${r.seq[j]}</div>`}
+    h+='</div></div>';
+  });
+  el.innerHTML=h+'</div>';
+}
+function drawBank(){
+  $("bank").innerHTML=reads.map((r,k)=>placed[k]?"":`<button class="read ${sel===k?"sel":""}" data-k="${k}" aria-label="Read ${k+1}">${[...r.seq].map(c=>`<span class="b b${c}">${c}</span>`).join("")}</button>`).join("")
+   ||'<span style="color:#1d704a;font-weight:800;align-self:center">✅ All reads placed!</span>';
+}
+const say=(id,t,c)=>{const e=$(id);e.textContent=t;e.className="msg show "+c};
+const addScore=(base,pen,w)=>{score+=Math.max(20,base-pen*w);$("score").textContent=score};
+
+/* navigation */
+function go(n){
+  cur=n;unlocked=Math.max(unlocked,n);
+  for(let i=1;i<=4;i++)$("L"+i).classList.toggle("hidden",i!==n);
+  $("prog").style.width=(n===4?100:n*25)+"%";
+  document.querySelectorAll(".tab").forEach(t=>{const l=+t.dataset.l;t.setAttribute("aria-selected",l===n);t.classList.toggle("locked",l>unlocked)});
+  if(n===4)$("final").textContent=score;
+  if(n===2)pile($("pile2"),$("n2").classList.contains("hidden")?"find":"done");
+  scrollTo({top:0,behavior:"smooth"});
+}
+$("tabs").onclick=e=>{const t=e.target.closest(".tab");if(t&&+t.dataset.l<=unlocked&&(+t.dataset.l!==4||unlocked>=4))go(+t.dataset.l)};
+
+/* Level 1 */
+$("bank").onclick=e=>{const b=e.target.closest(".read");if(!b)return;sel=+b.dataset.k;drawBank();say("m1","Now tap the reference letter where this read starts.","info")};
+$("pile1").onclick=e=>{
+  const c=e.target.closest(".rc");if(!c)return;
+  if(sel===null)return say("m1","Pick a read from the bank first.","info");
+  const s=+c.dataset.c,r=reads[sel];
+  if(s===r.start){
+    placed[sel]=true;sel=null;drawBank();pile($("pile1"),"align");
+    if(placed.every(Boolean)){addScore(100,10,wrong1);say("m1","🎉 Every read is placed. Now they can be compared to the reference.","good");$("n1").classList.remove("hidden")}
+    else say("m1","✅ Best fit! Place the next one.","good");
+  }else{
+    wrong1++;
+    const m=s>N-L?null:[...r.seq].filter((ch,j)=>ch===ref[s+j]).length;
+    say("m1",m===null?"That read would run off the end of the reference.":`Not the best spot: only ${m} of ${L} letters match there.`,"bad");
+  }
+};
+$("hint1").onclick=()=>{const k=reads.findIndex((_,i)=>!placed[i]);if(k>=0)say("m1",`💡 One of the remaining reads starts at position ${reads[k].start+1}. Try each read there and see which fits.`,"info")};
+$("n1").onclick=()=>go(2);
+
+/* Level 2 */
+$("pile2").onclick=e=>{
+  const c=e.target.closest("[data-c]");if(!c||!$("n2").classList.contains("hidden"))return;
+  const p=+c.dataset.c;
+  if(p===snp.pos){
+    addScore(100,20,wrong2);pile($("pile2"),"done");
+    say("m2",`🎉 Position ${p+1}: the reference has ${snp.ref} but the reads have ${snp.alt}. That's a SNP (${snp.ref} → ${snp.alt}).`,"good");
+    $("n2").classList.remove("hidden");
+  }else{
+    wrong2++;missed.add(p);pile($("pile2"),"find");
+    say("m2",wrong2>=2?"Still no. Compare each column: do the reads all agree with the reference there?":"Not that one. Do all the reads agree with the reference at that position?","bad");
+  }
+};
+$("hint2").onclick=()=>say("m2",`💡 The two reads that cover position ${snp.pos+1} are the ones that disagree. Look near there.`,"info");
+$("n2").onclick=()=>go(3);
+
+/* Level 3 */
+const FB={cause:"Careful: an association can't show cause. Other factors, like ancestry or a nearby gene, can create the same pattern.",diag:"A single variant in one person is not a diagnosis. Many carriers never develop the disease."};
+$("choices").onclick=e=>{
+  const b=e.target.closest(".choice");if(!b||b.disabled)return;
+  if(b.dataset.k==="assoc"){
+    b.classList.add("ok");document.querySelectorAll(".choice").forEach(x=>x.disabled=true);
+    addScore(100,30,wrong3);say("m3","🎉 Exactly! It's a clue worth investigating.","good");
+    $("why").classList.remove("hidden");$("n3").classList.remove("hidden");
+  }else{
+    wrong3++;b.classList.add("no");b.disabled=true;say("m3",FB[b.dataset.k],"bad");
+  }
+};
+$("n3").onclick=()=>{unlocked=4;go(4)};
+
+/* start / reset (also used by kiosk idle timer) */
+function reset(){
+  gen();score=0;unlocked=1;$("score").textContent=0;
+  ["m1","m2","m3"].forEach(i=>$(i).className="msg");
+  ["n1","n2","n3","why"].forEach(i=>$(i).classList.add("hidden"));
+  document.querySelectorAll(".choice").forEach(b=>{b.disabled=false;b.className="choice"});
+  pile($("pile1"),"align");drawBank();go(1);
+}
+$("start").onclick=()=>{$("intro").classList.add("hidden");$("game").classList.remove("hidden");reset()};
+$("again").onclick=reset;
+
+/* kiosk: return to the start screen after 90 s of no activity */
+function bump(){clearTimeout(idle);idle=setTimeout(()=>{if(!$("game").classList.contains("hidden")){$("game").classList.add("hidden");$("intro").classList.remove("hidden");scrollTo(0,0)}},90000)}
+["click","keydown","touchstart","mousemove"].forEach(ev=>addEventListener(ev,bump,{passive:true}));bump();
+</script>
+</body>
+</html>
